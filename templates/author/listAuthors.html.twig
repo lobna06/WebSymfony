@@ -1,37 +1,38 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <title>Liste des auteurs</title>
     <link rel="stylesheet" href="{{ asset('style.css') }}">
 </head>
 <body>
-<h1>Liste des auteurs</h1>
-{% if authors is not defined or authors is empty %}
-    <h1>Aucun auteur n'est disponible</h1>
-{% else %}
-    <table>
-        <tr>
-            <th>Username</th>
-            <th>Image</th>
-            <th>Détails</th>
-        </tr>
+    <h1>Liste des auteurs</h1>
+
+    {% if authors is not defined or authors is empty %}
+        <h1>Aucun auteur n'est disponible</h1>
+    {% else %}
+        <table>
+            <tr>
+                <th>Username</th>
+                <th>Image</th>
+                <th>Détails</th>
+            </tr>
+            {% for author in authors %}
+            <tr>
+                <td>{{ author.username|upper }}</td>
+                <td><img src="{{ asset(author.picture) }}" width="30%"></td>
+                <td><a href="{{ path('app_show_author_by_id', {'id': author.id}) }}">Details</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+        
+        <p>Le nombre total des auteurs est {{ authors|length }}</p>
+
+        {% set totallivres = 0 %}
         {% for author in authors %}
-        <tr>
-            <td>{{ author.username|upper }}</td>
-            <td><img src="{{ asset(author.picture) }}" width="30%"></td>
-            <td><a href="{{ path('app_showAuthor', {'id': author.id}) }}">Details</a></td>
-        </tr>
+            {% set totallivres = totallivres + author.nbBooks %}
         {% endfor %}
-    </table>
-{% endif %}
-
-<p>Le nombre total des auteurs est {{ authors|length }}</p>
-
-{% set totallivres = 0 %}
-{% for author in authors %}
-    {% set totallivres = totallivres + author.nb_books %}
-{% endfor %}
-<p>Le nombre total des livres est {{ totallivres }}</p>
+        <p>Le nombre total des livres est {{ totallivres }}</p>
+    {% endif %}
 </body>
 </html>

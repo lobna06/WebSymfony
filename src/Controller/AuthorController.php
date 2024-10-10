@@ -2,19 +2,21 @@
 
 namespace App\Controller;
 
+use App\Repository\AuthorRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Annotation\Route;
 
 class AuthorController extends AbstractController
 {
-    private $authors;
-    public function __construct()
-{$this -> authors = [ [ 'id' => 1 , 'picture' => '/images/vh.png' , 'username' => 'Victor Hugo' , 'email' => 'victor.hugo@gmail.com' , 'nb_books' => 100 ], 
-    [ 'id' => 2 , 'picture' => '/images/ws.png' , 'username' => 'William Shakespeare' , 'email' => 'william.shakespeare@gmail.com' , 'nb_books' => 200 ],
-     [ 'id' => 3 , 'picture' => '/images/th.png' , 'username' => 'Taha Hussein' , 'email' => 'taha.hussein@gmail.com' , 'nb_books' => 300 ], ];}
+    private $authorRepository;
 
-    #[Route('/author', name: 'app_author',methods:["GET"])]
+    public function __construct(AuthorRepository $authorRepository)
+    {
+        $this->authorRepository = $authorRepository;
+    }
+
+    #[Route('/author', name: 'app_author', methods: ["GET"])]
     public function index(): Response
     {
         return $this->render('author/index.html.twig', [
@@ -22,27 +24,56 @@ class AuthorController extends AbstractController
         ]);
     }
 
-
-    #[Route('/showAuthor/{name}', name: 'app_showAuthor')]
-    public function  showAuthor ($name)
-    {return $this->render('service/showAuthor.html.twig',['n'=>$name]);
-    }
-
-
-    #[Route ('/listAuthors', name: 'app_listAuthors',methods:["GET"])]
-    public function  listAuthors ():Response
+    #[Route('/showAuthor/{name}', name: 'app_show_author_by_name')]
+    public function showAuthor($name): Response
     {
-        return $this->render('author/listAuthors.html.twig',['authors'=>$this->authors]);
+        return $this->render('author/showAuthor.html.twig', ['n' => $name]);
     }
 
+    #[Route('/listAuthors', name: 'app_list_authors', methods: ["GET"])]
+    public function listAuthors(): Response
+    {
+        // Fetching authors from repository
+        $authors = $this->authorRepository->findAll();
+        return $this->render('author/listAuthors.html.twig', ['authors' => $authors]);
+    }
 
+    #[Route('/showAuthors', name: 'app_show_authors', methods: ["GET"])]
+    public function findauthorsbyId(): Response
+    {
+        // Fetching authors from repository
+        $authors = $this->authorRepository->find($id);
+        return $this->render('author/showAuthors.html.twig', ['authors' => $authors]);}
 
-    #[Route('/author/{id}', name: 'app_showAuthor')]
-public function authorDetails($id): Response
+    #[Route('/author/{id}', name: 'app_show_author_by_id')]
+    public function authorDetails($id): Response
+    {
+        // Fetch the author by ID from the repository
+        $author = $this->authorRepository->find($id);
+        
+        if (!$author) {
+            throw $this->createNotFoundException('Author not found');
+        }
+
+        return $this->render('author/showAuthor.html.twig', ['author' => $author]);
+    }
+
+    #[Route('/author/{id}/books', name: 'app_author_books', methods: ['GET'])]
+public function showBooksByAuthor($id, LivreRepository $livreRepository): Response
 {
-    $author = array_filter($this->authors, fn($a) => $a['id'] === (int)$id);//neb9a nlawej aal author b id teeou b filtre
- $author = reset($author);// hethi pour acceder au 1er author
+    $author = $this->authorRepository->find($id);
+    
+    if (!$author) {
+        throw $this->createNotFoundException('Author not found');
+    }
 
-    return $this->render('author/showAuthor.html.twig', ['author' => $author,   ]);
+    $books = $livreRepository->findByAuthor($author);
+
+    return $this->render('author/showBooks.html.twig', [
+        'author' => $author,
+        'books' => $books,
+    ]);
 }
+
+    
 }
